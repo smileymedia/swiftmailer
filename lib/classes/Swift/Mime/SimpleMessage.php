@@ -537,6 +537,25 @@ class Swift_Mime_SimpleMessage extends Swift_Mime_MimePart
   }
   
   /**
+   * Get this message body as a complete string.
+   * @return string
+   */
+  public function getBodyString()
+  {
+    if (count($children = $this->getChildren()) > 0 && $this->getBody() != '')
+    {
+      $this->setChildren(array_merge(array($this->_becomeMimePart()), $children));
+      $string = $this->_bodyToString();
+      $this->setChildren($children);
+    }
+    else
+    {
+      $string = $this->_bodyToString();
+    }
+    return $string;
+  }
+  
+  /**
    * Returns a string representation of this object.
    *
    * @return string
