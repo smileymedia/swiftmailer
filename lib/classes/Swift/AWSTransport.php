@@ -101,6 +101,16 @@
 
 			$success = (200 == $result->code);
 
+            // Handle errors in AWS response
+            if (isset($result->xml->Error)) {
+                $error = $result->xml->Error;
+                $errorMessage = sprintf(
+                    "AWS responded with error: [Type: '%s'; Code: '%s'; Message: '%s']",
+                    $error->Type, $error->Code, $error->Message
+                );
+                throw new AWSErrorResponseException($errorMessage);
+            }
+
 			if ($evt)
 			{
 				$evt->setResult($success ? Swift_Events_SendEvent::RESULT_SUCCESS : Swift_Events_SendEvent::RESULT_FAILED);
@@ -296,7 +306,7 @@
 			switch( $this->state ) {
 				case self::STATE_EMPTY:
 					if( ! $line ) {
-						throw new AWSEmptyResponseException();
+						throw new AWSEmptyResponseException('Empty response from AWS');
 					}
 					$split = explode( ' ', $line );
 					$this->code = $split[1];
@@ -327,7 +337,8 @@
 
 	}
 
-	class AWSConnectionError extends Exception {}
-	class InvalidOperationException extends Exception {}
-	class InvalidHeaderException extends Exception {}
-	class AWSEmptyResponseException extends Exception {}
+	class AWSConnectionError extends Swift_TransportException {}
+	class InvalidOperationException extends Swift_TransportException {}
+	class InvalidHeaderException extends Swift_TransportException {}
+	class AWSEmptyResponseException extends Swift_TransportException {}
+    class AWSErrorResponseException extends Swift_TransportException {}
