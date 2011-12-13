@@ -20,7 +20,7 @@ class Swift_Transport_LoadBalancedTransport implements Swift_Transport
 {
   
   /** Transports which are deemed useless */
-  private $_deadTransports = array();
+  protected $_deadTransports = array();
   
   /**
    * The Transports which are used in rotation.
