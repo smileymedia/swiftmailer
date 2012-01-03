@@ -118,7 +118,7 @@ class Swift_Transport_LoadBalancedTransport implements Swift_Transport
       }
       catch (Swift_TransportException $e)
       {
-        $this->_killCurrentTransport();
+        $this->_killCurrentTransport($e);
       }
     }
     
@@ -166,8 +166,10 @@ class Swift_Transport_LoadBalancedTransport implements Swift_Transport
    * Tag the currently used (top of stack) transport as dead/useless.
    * 
    * @access protected
+   *
+   * @param mixed $e Exception
    */
-  protected function _killCurrentTransport()
+  protected function _killCurrentTransport($e = null)
   {
     if ($transport = array_pop($this->_transports))
     {
