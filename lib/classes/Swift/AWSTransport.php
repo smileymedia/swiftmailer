@@ -104,11 +104,17 @@
             // Handle errors in AWS response
             if (isset($result->xml->Error)) {
                 $error = $result->xml->Error;
-                $errorMessage = sprintf(
-                    "AWS responded with error: [Type: '%s'; Code: '%s'; Message: '%s']",
-                    $error->Type, $error->Code, $error->Message
-                );
-                throw new AWSErrorResponseException($errorMessage);
+                if ($error->Code == 'MessageRejected') {
+                    throw new AWSMessageRejectedException(
+                        "Message for {$message->getTo()} was rejected by AWS: {$error->Message}"
+                    );
+                } else {
+                    $errorMessage = sprintf(
+                        "AWS responded with error: [Type: '%s'; Code: '%s'; Message: '%s']",
+                        $error->Type, $error->Code, $error->Message
+                    );
+                    throw new AWSErrorResponseException($errorMessage);
+                }
             }
 
 			if ($evt)
@@ -342,3 +348,4 @@
 	class InvalidHeaderException extends Swift_TransportException {}
 	class AWSEmptyResponseException extends Swift_TransportException {}
     class AWSErrorResponseException extends Swift_TransportException {}
+    class AWSMessageRejectedException extends Swift_TransportException {}
