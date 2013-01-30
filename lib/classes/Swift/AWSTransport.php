@@ -224,7 +224,7 @@
 			$this->write_finished = false;
 			$this->read_started = false;
 
-			fwrite( $this->socket, "$method $path HTTP/1.1\r\n" );
+			$this->fwrite( $this->socket, "$method $path HTTP/1.1\r\n" );
 
 			$this->header( "Host", $host );
 			if( "POST" == $method ) {
@@ -242,8 +242,8 @@
 		 */
 		public function header ( $header, $value ) {
 			if( $this->write_started ) { throw new InvalidOperationException( "Can not write header, body writing has started." ); }
-			fwrite( $this->socket, "$header: $value\r\n" );
-			fflush( $this->socket );
+            $this->fwrite( $this->socket, "$header: $value\r\n" );
+            $this->fflush( $this->socket );
 		}
 
 		/**
@@ -254,13 +254,13 @@
 			if( $this->write_finished ) { throw new InvalidOperationException( "Can not write, reading has started." ); }
 
 			if( ! $this->write_started ) {
-				fwrite( $this->socket, "\r\n" ); // Start message body
+                $this->fwrite( $this->socket, "\r\n" ); // Start message body
 				$this->write_started = true;
 			}
 
-			fwrite( $this->socket, sprintf( "%x\r\n", strlen( $chunk ) ) );
-			fwrite( $this->socket, $chunk . "\r\n" );
-			fflush( $this->socket );
+            $this->fwrite( $this->socket, sprintf( "%x\r\n", strlen( $chunk ) ) );
+            $this->fwrite( $this->socket, $chunk . "\r\n" );
+			$this->fflush( $this->socket );
 		}
 
 		/**
@@ -288,6 +288,61 @@
 			return $response;
 		}
 
+        /**
+         * Wrapper around fflush call
+         *
+         * @param $sock
+         * @param $data
+         *
+         * @return void
+         */
+        protected function fflush($sock)
+        {
+            $oldh = set_error_handler(
+                function ($errno, $errstr) {
+                    throw new InvalidOperationException($errstr);
+                }
+            );
+
+            try {
+                @fflush($sock);
+            } catch (InvalidOperationException $e) {
+                set_error_handler($oldh);
+                throw $e;
+            }
+
+            set_error_handler($oldh);
+        }
+
+        /**
+         * Wrapper around fwrite call
+         *
+         * @param $sock
+         * @param $data
+         *
+         * @return integer
+         */
+        protected function fwrite($sock, $data)
+        {
+            $oldh = set_error_handler(
+                function ($errno, $errstr) {
+                    throw new InvalidOperationException($errstr);
+                }
+            );
+
+            $num = 0;
+
+            try {
+                $num = @fwrite($sock, $data);
+            } catch (InvalidOperationException $e) {
+                set_error_handler($oldh);
+                throw $e;
+            }
+
+            set_error_handler($oldh);
+
+            return $num;
+        }
 	}
 
 	/**
